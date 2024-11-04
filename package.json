@@ -1,0 +1,14 @@
+{
+	"name": "papaya-protocol-ts",
+	"version": "0.1",
+	"description": "Typescript library for Papaya Network Protocol (PNP)",
+	"main": "index.js",
+	"scripts": {
+		"hola": "echo HOLA"
+	},
+	"author": "dbeny",
+	"license": "ISC",
+	"dependencies": {
+		"typescript": "^5.6.3"
+	}
+}
