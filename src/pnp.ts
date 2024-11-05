@@ -1,16 +1,18 @@
 import * as crypto from "crypto";
 import * as net from "net";
 
+export type PNPMethod = "get" | "post";
+
 export interface PNPRequest {
-	method: string; // todo upgrade to a fixed list of strings
+	method: PNPMethod;
 	path: string;
-	headers: Record<string, string>; // todo upgrade to a fixed list of strings
+	headers: Record<string, string>;
 	body: string;
 }
 
 export interface PNPResponse {
 	status: Status;
-	headers: Record<string, string>; // todo upgrade to a fixed list of strings
+	headers: Record<string, string>;
 	body: string;
 }
 
