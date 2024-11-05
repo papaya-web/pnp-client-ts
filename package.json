@@ -1,14 +1,26 @@
 {
-	"name": "papaya-protocol-ts",
-	"version": "0.1",
-	"description": "Typescript library for Papaya Network Protocol (PNP)",
-	"main": "index.js",
+	"name": "@papaya-web/pnp-client",
+	"version": "1.0.0",
+	"description": "PNP Client for the Papaya Web",
+	"main": "dist/pnp.js",
+	"types": "dist/pnp.d.ts",
+	"files": ["dist"],
 	"scripts": {
-		"hola": "echo HOLA"
+		"build": "tsc",
+		"prepare": "npm run build"
 	},
 	"author": "dbeny",
-	"license": "ISC",
-	"dependencies": {
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^22.9.0",
+		"net": "^1.0.2",
 		"typescript": "^5.6.3"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/papaya-web/pnp-client-ts.git"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }
