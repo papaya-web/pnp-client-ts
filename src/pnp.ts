@@ -14,7 +14,7 @@ export interface PNPResponse {
 	body: string;
 }
 
-class PNPConnection {
+export class PNPConnection {
 	private readonly host: string;
 	private readonly port: number;
 	private socket: net.Socket;
@@ -77,7 +77,7 @@ class PNPConnection {
 	}
 }
 
-class PNPEncryption {
+export class PNPEncryption {
 	private readonly algorithm: string;
 	private readonly key: Buffer;
 	
