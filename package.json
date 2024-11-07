@@ -1,6 +1,6 @@
 {
 	"name": "@papaya-web/pnp-client",
-	"version": "1.0.4",
+	"version": "1.0.6",
 	"description": "PNP Client library for the Papaya Web",
 	"main": "dist/PapayaClient.js",
 	"types": "dist/PapayaClient.d.ts",

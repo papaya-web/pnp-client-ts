@@ -20,24 +20,22 @@ export class PNPConnection {
 	private readonly host: string;
 	private readonly port: number;
 	private socket: net.Socket;
-	private debugMode: boolean;
 	
-	constructor(host: string, port: number, debugMode: boolean) {
+	constructor(host: string, port: number) {
 		this.host = host;
 		this.port = port;
 		this.socket = new net.Socket();
-		this.debugMode = debugMode;
 	}
 	
 	connect(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			this.socket.connect(this.port, this.host, () => {
-				if (this.debugMode) console.log(`Connected to ${this.host}:${this.port}`);
+				console.log(`Connected to ${this.host}:${this.port}`);
 				resolve();
 			});
 			this.socket.on("error", (err) => {
-				if (this.debugMode) console.log(`Error: ${err.message}`);
-				reject(err);
+				console.error(`Caught an error ${err.message}`);
+				reject();
 			});
 		});
 	}
@@ -46,12 +44,9 @@ export class PNPConnection {
 		return new Promise((resolve, reject) => {
 			this.socket.write(data, (err) => {
 				if (err) {
-					if (this.debugMode) console.log(`Error: ${err.message}`);
-					reject(err);
-				} else {
-					if (this.debugMode) console.log(`Sent data to ${this.host}:${this.port} (length: ${data.length})`);
-					resolve();
-				}
+					console.error(`Caught an error when trying to send a request: ${err.message}`);
+					reject();
+				} else resolve();
 			});
 		});
 	}
@@ -59,11 +54,11 @@ export class PNPConnection {
 	receive(): Promise<Buffer> {
 		return new Promise((resolve, reject) => {
 			this.socket.once("data", (data) => {
-				if (this.debugMode) console.log(`Got data from ${this.host}:${this.port} (length: ${data.length})`);
+				console.log(`Got a response with length: ${data.length}`);
 				resolve(data);
 			});
 			this.socket.on("error", (err) => {
-				if (this.debugMode) console.log(`Error: ${err.message}`);
+				console.log(`Caught an error when getting a response: ${err.message}`);
 				reject(err);
 			});
 		});
@@ -71,48 +66,43 @@ export class PNPConnection {
 	
 	close(): void {
 		this.socket.end();
-		if (this.debugMode) console.log("Connection closed");
-	}
-	
-	setDebugMode(mode: boolean) {
-		this.debugMode = mode;
+		console.log("Connection closed");
 	}
 }
 
 export class PNPEncryption {
 	private readonly algorithm: string;
 	private readonly key: Buffer;
+	private readonly iv: Buffer;
 	
-	constructor() {
+	constructor(key: Buffer, iv: Buffer) {
 		this.algorithm = "aes-256-cbc";
-		this.key = crypto.randomBytes(32);
+		this.key = key;
+		this.iv = iv;
 	}
 	
-	encrypt(data: string): Buffer {
-		const iv = crypto.randomBytes(16);
-		const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
-		let encrypted = cipher.update(data, "utf8", "hex");
+	encrypt(data: string): string {
+		let cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
+		let encrypted = cipher.update(data, "utf-8", "hex");
 		encrypted += cipher.final("hex");
-		return Buffer.from(iv.toString("hex") + ":" + encrypted, "utf8");
+		return encrypted;
 	}
 	
 	decrypt(data: Buffer): string {
-		const textParts = data.toString().split(":");
-		const iv = Buffer.from(textParts.shift()!, "hex");
-		const encryptedText = Buffer.from(textParts.join(":"), "hex");
-		const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
-		const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
-		return decrypted.toString("utf8");
+		let decipher = crypto.createDecipheriv(this.algorithm, this.key, this.iv);
+		let decrypted = decipher.update(data.toString("utf-8"), "hex", "utf-8");
+		decrypted += decipher.final("utf-8");
+		return decrypted;
 	}
 }
 
-export class PNP {
+export class PNPClient {
 	private connection: PNPConnection;
 	private encryption: PNPEncryption;
 	
-	constructor(host: string, port: number, debugMode: boolean) {
-		this.connection = new PNPConnection(host, port, debugMode);
-		this.encryption = new PNPEncryption();
+	constructor(host: string, port: number, key: Buffer, iv: Buffer) {
+		this.connection = new PNPConnection(host, port);
+		this.encryption = new PNPEncryption(key, iv);
 	}
 	
 	async connect() {
@@ -123,7 +113,7 @@ export class PNP {
 		const data = JSON.stringify(request);
 		const encrypted = this.encryption.encrypt(data);
 		
-		await this.connection.send(encrypted);
+		await this.connection.send(Buffer.from(encrypted));
 		const responseEncrypted = await this.connection.receive();
 		const responseData = this.encryption.decrypt(responseEncrypted);
 		
@@ -132,10 +122,6 @@ export class PNP {
 	
 	close() {
 		this.connection.close();
-	}
-	
-	setDebugMode(mode: boolean) {
-		this.connection.setDebugMode(mode);
 	}
 }
 
